@@ -63,6 +63,9 @@ public class IBMModel1 implements WordAligner {
       HashSet<String> uniqueSourceWords = new HashSet<String>();
       for(SentencePair pair : trainingPairs){
         List<String> sourceWords = pair.getSourceWords();
+        if (!sourceWords.contains("NULL")) { 
+          sourceWords.add("NULL");
+        } 
         for(String sourceWord : sourceWords) {
           uniqueSourceWords.add(sourceWord);  
         }

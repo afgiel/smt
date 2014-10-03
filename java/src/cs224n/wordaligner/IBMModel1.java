@@ -11,6 +11,7 @@ public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
   private static final int MAX_ITERS = 10000;
+  private static final double CONVERGE_THRESH = .1;
 
   private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;
@@ -23,7 +24,19 @@ public class IBMModel1 implements WordAligner {
     if (!sourceWords.contains("NULL")) { 
       sourceWords.add("NULL");
     }
-     
+    
+    for (int tgtIndex = 0; tgtIndex < targetWords.size(); tgtIndex++) {
+      double maxProb = Double.NEGATIVE_INFINITY;
+      int argMaxSrcIndex = 0;
+      for (int srcIndex = 0; srcIndex < sourceWords.size(); srcIndex++) {
+        double prob = tMap.getCount(sourceWords.get(srcIndex), targetWords.get(tgtIndex)); 
+        if (prob > maxProb) {
+          maxProb = prob;
+          argMaxSrcIndex = srcIndex;
+        }
+      }
+      alignment.addPredictedAlignment(tgtIndex, argMaxSrcIndex);
+    } 
     return alignment;
   }
 
@@ -65,10 +78,24 @@ public class IBMModel1 implements WordAligner {
 
   private boolean maximization() {
     CounterMap<String, String> newTMap = Counters.conditionalNormalize(cMap);
-    boolean converged = false; 
-    // check convergence 
+    boolean converged = checkConvergence(newTMap); 
     tMap = newTMap;
     return converged; 
+  }
+
+  private boolean checkConvergence(CounterMap<String, String> newTMap) { 
+    int totalNumEntries = 0;
+    double totalDifference = 0.0;
+    for(String sourceKey : tMap.keySet()) {
+      for(String targetKey : tMap.getCounter(sourceKey).keySet()) {
+        double oldProb = tMap.getCount(sourceKey, targetKey);
+        double newProb = newTMap.getCount(sourceKey, targetKey);
+        totalDifference += Math.abs(oldProb - newProb);
+        totalNumEntries++;
+      }
+    }
+    double averageDiff = totalDifference/totalNumEntries;
+    return averageDiff < CONVERGE_THRESH;
   }
 
   private void addDelta(List<String> sourceWords, List<String> targetWords, int iteration){

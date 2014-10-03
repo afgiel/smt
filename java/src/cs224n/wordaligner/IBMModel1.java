@@ -10,8 +10,8 @@ import java.util.HashSet;
 public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
-  private static final int MAX_ITERS = 10000;
-  private static final double CONVERGE_THRESH = .1;
+  private static final int MAX_ITERS = 100;
+  private static final double CONVERGE_THRESH = .0001;
 
   private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;
@@ -53,7 +53,11 @@ public class IBMModel1 implements WordAligner {
     }
     
   }
-  
+ 
+  public CounterMap<String, String> getTMap() { 
+    return tMap;
+  }
+
   private void expectation(List<SentencePair> trainingPairs, int iteration) {
     if (iteration == 0) {
       HashSet<String> uniqueSourceWords = new HashSet<String>();

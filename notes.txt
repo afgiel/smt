@@ -1,0 +1,13 @@
+IBM MODEL 1 NOTES
+
+-----------------
+Seems that nothing is aligning to NULL, need to check that out 
+P: 0.5295
+R: 0.6923 
+AER: 0.4154
+ITER = 10k
+CON = 0.1
+----------------
+
+
+

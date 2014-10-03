@@ -10,9 +10,11 @@ import java.util.HashSet;
 public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
- 
-  private CounterMap<String, String> countMap;
+  private static final int MAX_ITERS = 10000;
+
+  private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;
+  private int numUniqueSourceWords;
 
   public Alignment align(SentencePair sentencePair) {
     Alignment alignment = new Alignment();
@@ -26,52 +28,71 @@ public class IBMModel1 implements WordAligner {
   }
 
   public void train(List<SentencePair> trainingPairs) {
-    countMap = new CounterMap<String, String>();
+    cMap = new CounterMap<String, String>();
     tMap = new CounterMap<String, String>();
     boolean converged = false;
-    boolean first = true; 
-    while (!converged) {
-      expectation(trainingPairs, first);
-      maximization();
-      first = first && false; 
+    int iteration = 0; 
+    while (!converged && iteration < MAX_ITERS) {
+      cMap = new CounterMap<String, String>();
+      expectation(trainingPairs, iteration);
+      converged =  maximization();
+      iteration++; 
     }
     
   }
-  private void expectation(List<SentencePair> trainingPairs, boolean first) {
-    for(SentencePair pair : trainingPairs){
-         List<String> targetWords = pair.getTargetWords();
-         List<String> sourceWords = pair.getSourceWords();
-         if (!sourceWords.contains("NULL")) { 
-            sourceWords.add("NULL");
-         }
-         countWords("source", sourceWords);
-         countJointOccurrences(sourceWords, targetWords);
-         computeProbs(first);
-    }   
-
-  } 
-
-  private void maximization() {
   
-  } 
- 
-  private void countWords(String key, List<String> words) {
-    for(String word : words){
-      countMap.incrementCount(key, word, 1.0);
-    }
-  }
-
-  private void countJointOccurrences(List<String> sourceWords, List<String> targetWords) {
-    HashSet<String> sourceWordsNoDup = new HashSet<String>(sourceWords);
-    HashSet<String> targetWordsNoDup = new HashSet<String>(targetWords);
-    for(String source : sourceWordsNoDup) {
-      for(String target : targetWordsNoDup){
-        countMap.incrementCount("joint", source + "," + target, 1.0);
+  private void expectation(List<SentencePair> trainingPairs, int iteration) {
+    if (iteration == 0) {
+      HashSet<String> uniqueSourceWords = new HashSet<String>();
+      for(SentencePair pair : trainingPairs){
+        List<String> sourceWords = pair.getSourceWords();
+        for(String sourceWord : sourceWords) {
+          uniqueSourceWords.add(sourceWord);  
+        }
+      }
+      numUniqueSourceWords = 1 + uniqueSourceWords.size();
+    } else {
+      for(SentencePair pair : trainingPairs){
+        List<String> targetWords = pair.getTargetWords();
+        List<String> sourceWords = pair.getSourceWords();
+        if (!sourceWords.contains("NULL")) { 
+          sourceWords.add("NULL");
+        }
+        addDelta(sourceWords, targetWords, iteration);
       }
     }
+  } 
+
+  private boolean maximization() {
+    CounterMap<String, String> newTMap = Counters.conditionalNormalize(cMap);
+    boolean converged = false; 
+    // check convergence 
+    tMap = newTMap;
+    return converged; 
   }
 
-  private void computeProbs(boolean first){ 
-    
-  } 
+  private void addDelta(List<String> sourceWords, List<String> targetWords, int iteration){
+    for(String targetWord : targetWords) {     
+      double deltaDenom = calculateDeltaDenom(targetWord, sourceWords);
+      for(String sourceWord : sourceWords) {
+        if(iteration == 1) {
+          double uniformProb = 1.0/numUniqueSourceWords;    
+          double alignmentProb = uniformProb*sourceWords.size(); 
+          cMap.incrementCount(sourceWord, targetWord, alignmentProb); 
+        } else {
+          double indivProb = tMap.getCount(sourceWord, targetWord);
+          double alignmentProb = indivProb/deltaDenom; 
+          cMap.incrementCount(sourceWord, targetWord, alignmentProb);
+        }     
+      }
+    } 
+  }
+
+  private double calculateDeltaDenom(String targetWord, List<String> sourceWords) {
+    double denom = 0.0;
+    for(String sourceWord : sourceWords) { 
+      denom += tMap.getCount(sourceWord, targetWord); 
+    }
+    return denom;
+  }
 }

@@ -11,11 +11,11 @@ public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
   private static final int MAX_ITERS = 100;
-  private static final double CONVERGE_THRESH = .0001;
+  private static final double CONVERGE_THRESH = .0005;
 
   private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;
-  private int numUniqueSourceWords;
+  private int numUniqueTargetWords;
 
   public Alignment align(SentencePair sentencePair) {
     Alignment alignment = new Alignment();
@@ -50,6 +50,7 @@ public class IBMModel1 implements WordAligner {
       expectation(trainingPairs, iteration);
       converged =  maximization();
       iteration++; 
+      System.out.println(iteration); 
     }
     
   }
@@ -60,17 +61,17 @@ public class IBMModel1 implements WordAligner {
 
   private void expectation(List<SentencePair> trainingPairs, int iteration) {
     if (iteration == 0) {
-      HashSet<String> uniqueSourceWords = new HashSet<String>();
+      HashSet<String> uniqueTargetWords = new HashSet<String>();
       for(SentencePair pair : trainingPairs){
-        List<String> sourceWords = pair.getSourceWords();
-        if (!sourceWords.contains("NULL")) { 
-          sourceWords.add("NULL");
+        List<String> targetWords = pair.getTargetWords();
+        if (!targetWords.contains("NULL")) { 
+          targetWords.add("NULL");
         } 
-        for(String sourceWord : sourceWords) {
-          uniqueSourceWords.add(sourceWord);  
+        for(String targetWord : targetWords) {
+          uniqueTargetWords.add(targetWord);  
         }
       }
-      numUniqueSourceWords = 1 + uniqueSourceWords.size();
+      numUniqueTargetWords = uniqueTargetWords.size();
     } else {
       for(SentencePair pair : trainingPairs){
         List<String> targetWords = pair.getTargetWords();
@@ -110,8 +111,8 @@ public class IBMModel1 implements WordAligner {
       double deltaDenom = calculateDeltaDenom(targetWord, sourceWords);
       for(String sourceWord : sourceWords) {
         if(iteration == 1) {
-          double uniformProb = 1.0/numUniqueSourceWords;    
-          double alignmentProb = uniformProb*sourceWords.size(); 
+          double uniformProb = 1.0/numUniqueTargetWords;    
+          double alignmentProb = uniformProb/(uniformProb*sourceWords.size()); 
           cMap.incrementCount(sourceWord, targetWord, alignmentProb); 
         } else {
           double indivProb = tMap.getCount(sourceWord, targetWord);

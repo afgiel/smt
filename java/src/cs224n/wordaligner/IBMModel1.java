@@ -48,9 +48,8 @@ public class IBMModel1 implements WordAligner {
     while (!converged && iteration < MAX_ITERS) {
       cMap = new CounterMap<String, String>();
       expectation(trainingPairs, iteration);
-      converged =  maximization();
+      converged =  maximization(iteration);
       iteration++; 
-      System.out.println(iteration); 
     }
     
   }
@@ -84,7 +83,8 @@ public class IBMModel1 implements WordAligner {
     }
   } 
 
-  private boolean maximization() {
+  private boolean maximization(int iteration) {
+    if (iteration == 0) return false; 
     CounterMap<String, String> newTMap = Counters.conditionalNormalize(cMap);
     boolean converged = checkConvergence(newTMap); 
     tMap = newTMap;

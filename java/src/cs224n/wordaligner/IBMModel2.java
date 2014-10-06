@@ -11,27 +11,31 @@ public class IBMModel2 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
   private static final int MAX_ITERS = 10000;
-  private static final double CONVERGE_THRESH = .1;
+  private static final double CONVERGE_THRESH = .01;
 
-  private CounterMap<String, String> cMap;
+  // The CounterMaps that stores the expected alignment counts in terms of indices and length.  Reset to 0 upon each iteration.
+  private CounterMap<String, String> cQMap;
+  // The CounterMaps that stores the expected alignment counts in terms of French word and English word.  
+  // French word is used as the key, English word as value. Reset to 0 upon each iteration.
+  private CounterMap<String, String> cTMap;
+  // The CounterMap that stores the q parameters. String representations are used as keys and values.
   private CounterMap<String, String> qMap;
   private CounterMap<String, String> tMap;
-  private int numUniqueSourceWords;
 
   public Alignment align(SentencePair sentencePair) {
     Alignment alignment = new Alignment();
-    List<String> targetWords = sentencePair.getTargetWords();
     List<String> sourceWords = sentencePair.getSourceWords();
-    int m = sourceWords.size();
-    int n = targetWords.size();
+    List<String> targetWords = sentencePair.getTargetWords();
     if (!sourceWords.contains("NULL")) { 
       sourceWords.add("NULL");
     }
-    for (int tgtIndex = 0; tgtIndex < targetWords.size(); tgtIndex++) {
+    int numSourceWords = sourceWords.size();
+    int numTargetWords = targetWords.size();
+    for (int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
       double maxProb = Double.NEGATIVE_INFINITY;
       int argMaxSrcIndex = 0;
-      for (int srcIndex = 0; srcIndex < sourceWords.size(); srcIndex++) {
-        double prob = qMap.getCount(tgtIndex + "," + n + "," + m, Integer.toString(srcIndex)) * tMap.getCount(sourceWords.get(srcIndex), targetWords.get(tgtIndex)); 
+      for (int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+        double prob = qMap.getCount(tgtIndex + "," + numTargetWords + "," + numSourceWords, Integer.toString(srcIndex)) * tMap.getCount(sourceWords.get(srcIndex), targetWords.get(tgtIndex)); 
         if (prob > maxProb) {
           maxProb = prob;
           argMaxSrcIndex = srcIndex;
@@ -45,36 +49,21 @@ public class IBMModel2 implements WordAligner {
   public void train(List<SentencePair> trainingPairs) {
     IBMModel1 bootstrap = new IBMModel1();
     bootstrap.train(trainingPairs);
-    cMap = new CounterMap<String, String>();
-    qMap = new CounterMap<String, String>();
     tMap = bootstrap.getTMap();
     boolean converged = false;
     int iteration = 0; 
     while (!converged && iteration < MAX_ITERS) {
-      cMap = new CounterMap<String, String>();
+      cQMap = new CounterMap<String, String>();
+      cTMap = new CounterMap<String, String>();
       expectation(trainingPairs, iteration);
-      converged =  maximization();
+      converged =  maximization(iteration);
       iteration++; 
     }
   }
   
   private void expectation(List<SentencePair> trainingPairs, int iteration) {
     if (iteration == 0) {
-      // Initialize q params randomly
-      for(SentencePair pair : trainingPairs){
-        List<String> sourceWords = pair.getSourceWords();
-        if (!sourceWords.contains("NULL")) { 
-          sourceWords.add("NULL");
-        }
-        List<String> targetWords = pair.getTargetWords();
-        int m = sourceWords.size();
-        int n = targetWords.size();
-        for(int i = 0; i < n; i++) {
-          for(int j = 0; j < m; j++) {
-            qMap.setCount(i + "," + n + "," + m, Integer.toString(j), Math.random());
-          }
-        }
-      }
+      initializeQParamsRandomly(trainingPairs);
     } else {
       for(SentencePair pair : trainingPairs){
         List<String> targetWords = pair.getTargetWords();
@@ -87,13 +76,18 @@ public class IBMModel2 implements WordAligner {
     }
   } 
 
-  private boolean maximization() {
-    CounterMap<String, String> newTMap = Counters.conditionalNormalize(cMap);
-    CounterMap<String, String> newQMap = Counters.conditionalNormalize(qMap);
-    boolean converged = checkConvergence(newTMap, newQMap); 
-    tMap = newTMap;
-    qMap = newQMap;
-    return converged; 
+  private boolean maximization(int iteration) {
+    if (iteration == 0) {
+      qMap = Counters.conditionalNormalize(cQMap);
+      return false;
+    } else {
+      CounterMap<String, String> newTMap = Counters.conditionalNormalize(cTMap);
+      CounterMap<String, String> newQMap = Counters.conditionalNormalize(cQMap);
+      boolean converged = checkConvergence(newTMap, newQMap); 
+      tMap = newTMap;
+      qMap = newQMap;
+      return converged; 
+    }
   }
 
   private boolean checkConvergence(CounterMap<String, String> newTMap, CounterMap<String, String> newQMap) { 
@@ -111,24 +105,42 @@ public class IBMModel2 implements WordAligner {
     return averageDiff < CONVERGE_THRESH;
   }
 
+  private void initializeQParamsRandomly(List<SentencePair> trainingPairs) {
+    for(SentencePair pair : trainingPairs){
+      List<String> sourceWords = pair.getSourceWords();
+      List<String> targetWords = pair.getTargetWords();
+      if (!sourceWords.contains("NULL")) { 
+        sourceWords.add("NULL");
+      }
+      int numSourceWords = sourceWords.size();
+      int numTargetWords = targetWords.size();
+      for(int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
+        for(int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+          cQMap.setCount(tgtIndex + "," + numTargetWords + "," + numSourceWords, Integer.toString(srcIndex), Math.random());
+        }
+      }
+    }
+  }
+
   private void addDelta(List<String> sourceWords, List<String> targetWords, int iteration){
-    int n = targetWords.size();
-    int m = sourceWords.size();
-    for(int i = 0; i < n; i++) {
-      double deltaDenom = calculateDeltaDenom(targetWords.get(i), i, n, sourceWords);
-      for(int j = 0; j < m; j++) {
-        double indivProb = qMap.getCount(i + "," + n + "," + m, Integer.toString(j)) * tMap.getCount(sourceWords.get(j), targetWords.get(i));
+    int numTargetWords = targetWords.size();
+    int numSourceWords = sourceWords.size();
+    for(int tgtIndex = 0; tgtIndex < numTargetWords; tgtIndex++) {
+      double deltaDenom = calculateDeltaDenom(targetWords.get(tgtIndex), tgtIndex, numTargetWords, sourceWords);
+      for(int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) {
+        double indivProb = qMap.getCount(tgtIndex + "," + numTargetWords + "," + numSourceWords, Integer.toString(srcIndex)) * tMap.getCount(sourceWords.get(srcIndex), targetWords.get(tgtIndex));
         double alignmentProb = indivProb/deltaDenom; 
-        cMap.incrementCount(sourceWords.get(j), targetWords.get(i), alignmentProb);
+        cTMap.incrementCount(sourceWords.get(srcIndex), targetWords.get(tgtIndex), alignmentProb);
+        cQMap.incrementCount(tgtIndex + "," + numTargetWords + "," + numSourceWords, Integer.toString(srcIndex), alignmentProb);
       }
     } 
   }
 
-  private double calculateDeltaDenom(String targetWord, int i, int n, List<String> sourceWords) {
-    int m = sourceWords.size();
+  private double calculateDeltaDenom(String targetWord, int tgtIndex, int numTargetWords, List<String> sourceWords) {
+    int numSourceWords = sourceWords.size();
     double denom = 0.0;
-    for(int j = 0; j < m; j++) { 
-      denom += qMap.getCount(i + "," + n + "," + m, Integer.toString(j)) * tMap.getCount(sourceWords.get(j), targetWord); 
+    for(int srcIndex = 0; srcIndex < numSourceWords; srcIndex++) { 
+      denom += qMap.getCount(tgtIndex + "," + numTargetWords + "," + numSourceWords, Integer.toString(srcIndex)) * tMap.getCount(sourceWords.get(srcIndex), targetWord); 
     }
     return denom;
   }

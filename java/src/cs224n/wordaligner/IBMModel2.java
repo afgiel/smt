@@ -10,8 +10,8 @@ import java.util.HashSet;
 public class IBMModel2 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
-  private static final int MAX_ITERS = 10000;
-  private static final double CONVERGE_THRESH = .01;
+  private static final int MAX_ITERS = 30;
+  private static final double CONVERGE_THRESH = .000001;
 
   // The CounterMaps that stores the expected alignment counts in terms of indices and length.  Reset to 0 upon each iteration.
   private CounterMap<String, String> cQMap;
@@ -59,6 +59,7 @@ public class IBMModel2 implements WordAligner {
       converged =  maximization(iteration);
       iteration++; 
     }
+    System.out.println("Number of iterations until converged: " + iteration);
   }
   
   private void expectation(List<SentencePair> trainingPairs, int iteration) {

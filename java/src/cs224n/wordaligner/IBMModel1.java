@@ -15,7 +15,6 @@ public class IBMModel1 implements WordAligner {
 
   private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;
-  private int numUniqueTargetWords;
 
   public Alignment align(SentencePair sentencePair) {
     Alignment alignment = new Alignment();
@@ -44,11 +43,11 @@ public class IBMModel1 implements WordAligner {
     cMap = new CounterMap<String, String>();
     tMap = new CounterMap<String, String>();
     boolean converged = false;
-    int iteration = 0; 
+    int iteration = 1; 
     while (!converged && iteration < MAX_ITERS) {
       cMap = new CounterMap<String, String>();
       expectation(trainingPairs, iteration);
-      converged =  maximization(iteration);
+      converged =  maximization();
       iteration++; 
     }
     
@@ -59,32 +58,17 @@ public class IBMModel1 implements WordAligner {
   }
 
   private void expectation(List<SentencePair> trainingPairs, int iteration) {
-    if (iteration == 0) {
-      HashSet<String> uniqueTargetWords = new HashSet<String>();
-      for(SentencePair pair : trainingPairs){
-        List<String> targetWords = pair.getTargetWords();
-        if (!targetWords.contains("NULL")) { 
-          targetWords.add("NULL");
-        } 
-        for(String targetWord : targetWords) {
-          uniqueTargetWords.add(targetWord);  
-        }
+    for(SentencePair pair : trainingPairs){
+      List<String> targetWords = pair.getTargetWords();
+      List<String> sourceWords = pair.getSourceWords();
+      if (!sourceWords.contains("NULL")) { 
+        sourceWords.add("NULL");
       }
-      numUniqueTargetWords = uniqueTargetWords.size();
-    } else {
-      for(SentencePair pair : trainingPairs){
-        List<String> targetWords = pair.getTargetWords();
-        List<String> sourceWords = pair.getSourceWords();
-        if (!sourceWords.contains("NULL")) { 
-          sourceWords.add("NULL");
-        }
-        addDelta(sourceWords, targetWords, iteration);
-      }
+      addDelta(sourceWords, targetWords, iteration);
     }
   } 
 
-  private boolean maximization(int iteration) {
-    if (iteration == 0) return false; 
+  private boolean maximization() {
     CounterMap<String, String> newTMap = Counters.conditionalNormalize(cMap);
     boolean converged = checkConvergence(newTMap); 
     tMap = newTMap;
@@ -111,8 +95,7 @@ public class IBMModel1 implements WordAligner {
       double deltaDenom = calculateDeltaDenom(targetWord, sourceWords);
       for(String sourceWord : sourceWords) {
         if(iteration == 1) {
-          double uniformProb = 1.0/numUniqueTargetWords;    
-          double alignmentProb = uniformProb/(uniformProb*sourceWords.size()); 
+          double alignmentProb = 1.0/sourceWords.size();
           cMap.incrementCount(sourceWord, targetWord, alignmentProb); 
         } else {
           double indivProb = tMap.getCount(sourceWord, targetWord);

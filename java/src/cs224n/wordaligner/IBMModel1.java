@@ -11,7 +11,7 @@ public class IBMModel1 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
   private static final int MAX_ITERS = 100;
-  private static final double CONVERGE_THRESH = .0005;
+  private static final double CONVERGE_THRESH = .001;
 
   private CounterMap<String, String> cMap;
   private CounterMap<String, String> tMap;

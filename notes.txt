@@ -6,8 +6,8 @@ Work on null word alignment
 
 IBM MODEL 1 NOTES
 
+FRENCH
 -----------------
-Seems that nothing is aligning to NULL, need to check that out 
 P: 0.5295
 R: 0.6923 
 AER: 0.4154

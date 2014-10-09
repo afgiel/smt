@@ -11,7 +11,7 @@ public class IBMModel2 implements WordAligner {
 
   private static final long serialVersionUID = 1315751943476440515L;
   private static final int MAX_ITERS = 30;
-  private static final double CONVERGE_THRESH = .000001;
+  private static final double CONVERGE_THRESH = .005;
 
   // The CounterMaps that stores the expected alignment counts in terms of indices and length.  Reset to 0 upon each iteration.
   private CounterMap<String, String> cQMap;
@@ -92,18 +92,29 @@ public class IBMModel2 implements WordAligner {
   }
 
   private boolean checkConvergence(CounterMap<String, String> newTMap, CounterMap<String, String> newQMap) { 
-    int totalNumEntries = 0;
-    double totalDifference = 0.0;
+    int totalNumTEntries = 0;
+    double totalTDifference = 0.0;
+    int totalNumQEntries = 0;
+    double totalQDifference = 0.0;
     for(String sourceKey : tMap.keySet()) {
       for(String targetKey : tMap.getCounter(sourceKey).keySet()) {
         double oldProb = tMap.getCount(sourceKey, targetKey);
         double newProb = newTMap.getCount(sourceKey, targetKey);
-        totalDifference += Math.abs(oldProb - newProb);
-        totalNumEntries++;
+        totalTDifference += Math.abs(oldProb - newProb);
+        totalNumTEntries++;
       }
     }
-    double averageDiff = totalDifference/totalNumEntries;
-    return averageDiff < CONVERGE_THRESH;
+    for(String key : qMap.keySet()) {
+      for(String value : qMap.getCounter(key).keySet()) {
+        double oldProb = qMap.getCount(key, value);
+        double newProb = newQMap.getCount(key, value);
+        totalQDifference += Math.abs(oldProb - newProb);
+        totalNumQEntries++;
+      }
+    }
+    double averageTDiff = totalTDifference/totalNumTEntries;
+    double averageQDiff = totalQDifference/totalNumQEntries;
+    return averageTDiff < CONVERGE_THRESH && averageQDiff < CONVERGE_THRESH;
   }
 
   private void initializeQParamsRandomly(List<SentencePair> trainingPairs) {

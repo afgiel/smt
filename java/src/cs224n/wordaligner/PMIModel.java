@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.HashSet;
 
 /**
- *
+ * Implements the pointwise mutual exclusion model.
  */
 public class PMIModel implements WordAligner {
 

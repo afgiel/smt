@@ -36,49 +36,212 @@ CON = 0.0001
 
 IBM MODEL 2 NOTES
 
+
+CONVERGENCE BASED ON AVERAGE CHANGE IN BOTH Q AND T PARAMS 
+
 FRENCH
 
+
 ---------------
-P: 0.6021
-R: 0.7337
-AER:    0.3534
-ITER = 10000
+Precision:  0.6218
+Recall: 0.7308
+AER:  0.3413
+ITER = 2
 CON = .1
 ---------------
 
 ----------------
 Precision:  0.5946
-Recall: 0.7781
-AER:  0.3456
-ITER = 10000
-CON = .01
+Recall: 0.7396
+AER:  0.3564
+ITER = 2
+CON = .05
 ---------------
 
+---------------
+Precision:  0.6369
+Recall: 0.7722
+AER:  0.3173
+ITER = 3
+CON = .01
 ----------------
-Precision:  0.6203
-Recall: 0.7959
-AER:  0.3224
-ITER = 100
+
+--------------
+Precision:  0.6354
+Recall: 0.7692
+AER:  0.3193
+ITER = 4
+CON = .005
+--------------
+
+--------------
+Precision:  0.6369
+Recall: 0.7781
+AER:  0.3153
+ITER = 7
 CON = .001
-----------------
+---------------
+
+---------------
+Precision:  0.6354
+Recall: 0.7692
+AER:  0.3193
+ITER = 9
+CON = .0005
+-------------
+Precision:  0.6309
+Recall: 0.7604
+AER:  0.3253
+ITER : 16
+CON = .0001
+
+-----------------
+Precision:  0.6354
+Recall: 0.7751
+AER:  0.3173
+ITER = 23
+CON = .00005
+------------------
+
+---------------
+Precision:  0.6354
+Recall: 0.7692
+AER:  0.3193
+ITER = 30
+CON = .00001
+-------------
 
 HINDI
 
----------------
-Precision:  0.4398
-Recall: 0.3485
-AER:  0.6111
-ITER = 100
-CON = .001
---------------
+-----------------
+Precision:  0.4342
+Recall: 0.3216
+AER:  0.6305
+ITER = 2
+CON = .1
+-----------------
 
+-----------------
+Precision:  0.4678
+Recall: 0.3465
+AER:  0.6019
+ITER = 2
+CON = .05
+----------------
+
+-----------------
+Precision:  0.4538
+Recall: 0.3361
+AER:  0.6138
+ITER = 3
+CON = .01
+-----------------
+
+-----------------
+Precision:  0.4482
+Recall: 0.3320
+AER:  0.6186
+ITER = 5
+CON = .005
+-----------------
+
+----------------
+Precision:  0.4482
+Recall: 0.3320
+AER:  0.6186
+ITER = 8
+CON = .001
+-----------------
+Precision:  0.4622
+Recall: 0.3423
+AER:  0.6067
+ITER = 11
+CON = .0005
+
+
+------------------
+Precision:  0.4650
+Recall: 0.3444
+AER:  0.6043
+ITER = 21
+CON = .0001
+-------------------
+Precision:  0.4510
+Recall: 0.3340
+AER:  0.6162  
+ITER = 30
+CON = .00005
+
+------------------
+Precision:  0.4650
+Recall: 0.3444
+AER:  0.6043
+ITER = 30
+CON = .00001
 
 CHINESE
 
+-----------------
+Precision:  0.4235
+Recall: 0.3829
+AER:  0.5978
+ITER = 2
+CON = .1
 ----------------
-Precision:  0.4234
-Recall: 0.3935
-AER:  0.5921
-ITER = 100
+
+-----------------
+Precision:  0.4230
+Recall: 0.3824
+AER:  0.5983
+ITER = 2
+CON = .05
+------------------
+------------------
+Precision:  0.4328
+Recall: 0.3913
+AER:  0.5890
+ITER = 3
 CON = .01
+-----------------
 ----------------
+Precision:  0.4341
+Recall: 0.3925
+AER:  0.5878
+ITER = 4
+CON = .005
+----------------
+Precision:  0.4363
+Recall: 0.3944
+AER:  0.5857
+ITER = 8
+CON = .001
+---------------
+
+----------------
+Precision:  0.4353
+Recall: 0.3935
+AER:  0.5866
+ITER = 11
+CON = .0005
+--------------
+-------------
+Precision:  0.4306
+Recall: 0.3893
+AER:  0.5911
+ITER = 23
+CON = .0001
+-------------
+
+-------------
+Precision:  0.4285
+Recall: 0.3874
+AER:  0.5931
+ITER = 30
+CON = .00005
+
+
+Precision:  0.4328
+Recall: 0.3913
+AER:  0.5890
+ITER = 30
+CON = .00001
